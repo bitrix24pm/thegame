@@ -2,6 +2,7 @@
 #include "tablet.h"
 #include "../data/constants.h"
 #include "../world/dungeon.h"
+#include "../procedural/sound.h"
 
 void pickup_spawn(Pickup* arr, vec2 pos, uint8_t kind, const Weapon& wpn, uint8_t tablet_flag) {
     int slot = -1;

@@ -8,6 +8,7 @@ struct vec2 {
     vec2(float x_, float y_) : x(x_), y(y_) {}
 
     vec2 operator+(const vec2& o) const { return {x + o.x, y + o.y}; }
+    vec2 operator-() const { return {-x, -y}; }
     vec2 operator-(const vec2& o) const { return {x - o.x, y - o.y}; }
     vec2 operator*(float s) const { return {x * s, y * s}; }
     vec2 operator/(float s) const { return {x / s, y / s}; }
