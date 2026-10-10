@@ -30,6 +30,7 @@ in vec3 v_world;
 out vec4 frag_color;
 uniform float u_time;
 uniform int u_mode; // 0 = плоская заливка, 1 = процедурный пол
+uniform vec2 u_player; // мировые координаты игрока (для освещения факелом)
 
 float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 float vnoise(vec2 p){
@@ -41,7 +42,7 @@ float vnoise(vec2 p){
 
 void main(){
     if(u_mode==1){
-        // Процедурный пол: сетка + шум + пульс
+        // Процедурный пол: сетка + шум + пульс + освещение от игрока
         vec2 uv=v_world.xz;
         vec2 grid=fract(uv);
         float line=min(step(0.93,grid.x)+step(0.93,grid.y),1.0);
@@ -50,6 +51,9 @@ void main(){
         vec3 gridc=vec3(0.16,0.30,0.52);
         vec3 col=mix(base,gridc,line*0.55);
         col+=gridc*0.06*(0.5+0.5*sin(u_time*1.5+length(uv)*0.8));
+        float dist=length(uv-u_player);
+        float light=clamp(1.0-(dist-3.0)/13.0,0.06,1.0);
+        col*=light;
         frag_color=vec4(col*v_col.rgb,v_col.a);
     } else {
         frag_color=v_col;
@@ -96,6 +100,7 @@ void Renderer::end_frame() { flush_batch(); }
 void Renderer::flush_batch() {
     if (batch_count == 0) return;
     sh_batch.use();
+    gl.Uniform1i(sh_batch.loc("u_mode"), 0); // по умолчанию — плоская заливка
     gl.UniformMatrix4fv(u_vp, 1, GL_FALSE, camera.vp.m);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -171,41 +176,51 @@ void Renderer::billboard_shadow(const vec2& pos, float size, float alpha) {
 
 // ---------- Пол: большой квад с режимом u_mode=1 ----------
 void Renderer::draw_floor(const Dungeon& d, float time_sec, const vec2& player_pos) {
-    (void)time_sec; (void)player_pos;
-    // Рисуем только тайлы пола как квады (батч). Пустота не рисуется вовсе.
+    (void)time_sec;
+    // --- тайлмапа: 0=пустота, 1=пол, 2=стена (в structs.h) ---
+    // Пол покрываем процедурным шейдером (u_mode=1): один большой квад на всю карту.
+    {
+        if (batch_count > 0) flush_batch();
+        sh_batch.use();
+        gl.Uniform1i(sh_batch.loc("u_mode"), 1);
+        gl.Uniform2f(sh_batch.loc("u_player"), player_pos.x, player_pos.y);
+        float half = DUNGEON_GRID_C * 0.5f;
+        quad(vec3(0, 0, 0), half, half, 0xFFFFFF, 1.0f, 0, -0.02f); // тонирование = белый (шейдер сам красит)
+        flush_batch(); // пол — отдельный draw call с u_mode=1
+        sh_batch.use();
+        gl.Uniform1i(sh_batch.loc("u_mode"), 0);
+    }
+    // Поверх процедурного пола — тайлы: проходы стен/подсветка исследованных зон
     for (int ty = 0; ty < DUNGEON_GRID_C; ty++) {
         for (int tx = 0; tx < DUNGEON_GRID_C; tx++) {
-            if (d.tiles[ty*DUNGEON_GRID_C + tx] != 1) continue;
+            uint8_t t = d.tiles[ty*DUNGEON_GRID_C + tx];
+            if (t == 0) continue;
+            bool wall = (t == 2);
             float wx = tx - DUNGEON_GRID_C/2 + 0.5f;
             float wz = ty - DUNGEON_GRID_C/2 + 0.5f;
             // расстояние до игрока -> яркость (освещение факелом)
             float dx = wx - player_pos.x, dz = wz - player_pos.y;
             float dist = std::sqrt(dx*dx + dz*dz);
-            float light = clampf(1.0f - (dist - 3.0f) / 13.0f, 0.10f, 1.0f);
-            uint32_t tint = 0xFFFFFF;
-            // модулируем яркость через альфа-цвет: используем прямой ввод вершин
+            float light = clampf(1.0f - (dist - 3.0f) / 13.0f, 0.0f, 1.0f);
+            if (!wall) continue; // пол уже нарисован процедурно — рисуем только стены
             if (batch_count + VERT_PER_QUAD > MAX_BATCH_QUADS*VERT_PER_QUAD) flush_batch();
             BatchVertex* v = &batch_data[batch_count];
-            float r = rgba_r(COL_FLOOR)*light*2.2f, g = rgba_g(COL_FLOOR)*light*2.2f, b = rgba_b(COL_FLOOR)*light*2.4f;
-            (void)tint;
+            float r = rgba_r(COL_GRID)*light*0.9f + 0.02f*light;
+            float g = rgba_g(COL_GRID)*light*0.9f + 0.02f*light;
+            float b = rgba_b(COL_GRID)*light*1.1f + 0.04f*light;
+            float yq = 0.6f * light + 0.15f; // подъём по Y — виден в изометрии
             vec2 c(wx, wz);
             float hs = 0.5f;
             vec2 corners[4] = {{-hs,-hs},{hs,-hs},{hs,hs},{-hs,hs}};
+            int order[6] = {0,1,2, 0,2,3};
             for (int k = 0; k < 6; k++) {
-                const vec2& cc = corners[k==0||k==3?0 : k==1||k==4?1 : k==2?2 : 3];
-                v[k].x = c.x+cc.x; v[k].y = 0.0f; v[k].z = c.y+cc.y;
+                const vec2& cc = corners[order[k]];
+                v[k].x = c.x+cc.x; v[k].y = yq; v[k].z = c.y+cc.y;
                 v[k].r = r; v[k].g = g; v[k].b = b; v[k].a = 1.0f;
             }
-            // порядок: 0,1,2, 0,2,3
-            BatchVertex t3[6];
-            t3[0]=v[0]; t3[1]=v[1]; t3[2]=v[2]; t3[3]=v[0]; t3[4]=v[2]; t3[5]=v[3];
-            memcpy(v, t3, sizeof(t3));
             batch_count += VERT_PER_QUAD;
         }
     }
-    // Поверх — светящаяся сетка процедурным слоем поверх пола не делаем; вместо этого
-    // рисуем тонкие линии сетки глобально в радиусе освещения (дёшево и красиво)
-    (void)d;
 }
 
 // ---------- Икосаэдр ----------

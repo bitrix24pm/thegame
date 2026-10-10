@@ -176,9 +176,10 @@ void EnemyAI::update_all(CombatWorld& w, float dt, float time_sec) {
             }
         }
 
-        // контактный урон ближнего типа даже вне атаки (небольшой)
+        // контактный урон ближнего типа даже вне атаки (небольшой, непрерывный)
+        (void)time_sec;
         if (dist < e.radius + PLAYER_RADIUS && e.base.state != E_ATTACK_PREP) {
-            if (time_sec > 0) damage_player(w, 4.f * dt * 10.f, e.base.pos);
+            damage_player(w, 6.f * dt, e.base.pos);
         }
     }
 }
