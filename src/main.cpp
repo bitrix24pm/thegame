@@ -13,6 +13,8 @@
 #include <cstring>
 #include <cmath>
 
+static void render_hud();  // forward decl (используется в render_world)
+
 // ---------------- Глобальное состояние (всё статично, без аллокаций) ----------------
 static Platform      g_platform;
 static Renderer      g_renderer;

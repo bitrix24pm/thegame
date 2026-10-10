@@ -6,7 +6,8 @@
 
 void CombatWorld::spawn_particles(vec2 pos, int n, uint32_t color, float speed) {
     for (int k = 0; k < n; k++) {
-        // ищем мёртвую частицу        int slot = -1;
+        // ищем мёртвую частицу
+        int slot = -1;
         for (int i = 0; i < MAX_PARTICLES; i++) if (!particles[i].alive) { slot = i; break; }
         if (slot < 0) slot = k % MAX_PARTICLES;
         Particle& p = particles[slot];
@@ -42,7 +43,7 @@ void CombatWorld::apply_tablets(uint8_t flags, int ei, vec2 from_pos) {
 void CombatWorld::kill_enemy(int idx, uint8_t tablets) {
     Enemy& e = enemies[idx];
     if (e.base.state == E_DEAD) return;
-    uint32_t col = e.is_boss ? COL_BOSS : (e.type == 0 ? COL_ENEMY0 : e.type == 1 ? COL_ENEMY1 : COL_ENEMY2);
+    uint32_t col = e.is_boss ? COL_BOSS : (e.base.type == 0 ? COL_ENEMY0 : e.base.type == 1 ? COL_ENEMY1 : COL_ENEMY2);
     spawn_particles(e.base.pos, e.is_boss ? 48 : 14, col, e.is_boss ? 8.f : 4.f);
     e.base.state = E_DEAD;
     audio->sfx_death();

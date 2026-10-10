@@ -3,6 +3,7 @@
 #include "../data/constants.h"
 #include "../math/math_utils.h"
 #include <cmath>
+#include <cstddef>
 #include <cstring>
 #include <cstdio>
 #include <GL/gl.h>
@@ -68,15 +69,15 @@ bool Renderer::init(int width, int height, void* (*getproc)(const char*)) {
     if (!sh_batch.compile(VS_MAIN, FS_MAIN)) return false;
     u_vp = sh_batch.loc("u_vp");
 
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(batch_data), nullptr, GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(BatchVertex), (void*)offsetof(BatchVertex, x));
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(BatchVertex), (void*)offsetof(BatchVertex, r));
-    glEnableVertexAttribArray(1);
+    gl.GenVertexArrays(1, &vao);
+    gl.BindVertexArray(vao);
+    gl.GenBuffers(1, &vbo);
+    gl.BindBuffer(GL_ARRAY_BUFFER, vbo);
+    gl.BufferData(GL_ARRAY_BUFFER, sizeof(batch_data), nullptr, GL_DYNAMIC_DRAW);
+    gl.VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(BatchVertex), (void*)offsetof(BatchVertex, x));
+    gl.EnableVertexAttribArray(0);
+    gl.VertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(BatchVertex), (void*)offsetof(BatchVertex, r));
+    gl.EnableVertexAttribArray(1);
 
     hud_proj = mat4::ortho(0, float(width), float(height), 0, -10, 10); // x вправо, y вниз
 
@@ -102,8 +103,8 @@ void Renderer::flush_batch() {
     sh_batch.use();
     gl.Uniform1i(sh_batch.loc("u_mode"), 0); // по умолчанию — плоская заливка
     gl.UniformMatrix4fv(u_vp, 1, GL_FALSE, camera.vp.m);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    gl.BindVertexArray(vao);
+    gl.BindBuffer(GL_ARRAY_BUFFER, vbo);
     gl.BufferData(GL_ARRAY_BUFFER, batch_count * sizeof(BatchVertex), batch_data, GL_DYNAMIC_DRAW);
     gl.DrawArrays(GL_TRIANGLES, 0, batch_count);
     batch_count = 0;
@@ -315,17 +316,16 @@ void Renderer::hud_bar(int x, int y, int w, int h, float frac, uint32_t color) {
 
 // Битмап-шрифт 5x7 (строки снизу вверх, бит 0 = нижний левый пиксель)
 static uint64_t glyph_bits(char c) {
-    static const uint64_t font[44] = {
-        // A-Z
+    static const uint64_t font[49] = {
+        // A-Z (26)
         0x0FAA6u,0x1D554u,0x0E492u,0x1D554u,0x1F492u,0x1F486u,0x0FAAEu,0x1FBB6u,0x1F514u,0x0ABBEu,
         0x1F2AAu,0x1F08Au,0x1BFB6u,0x1DBB6u,0x0FAAEu,0x1F544u,0x0FAAEu,0x1F54Cu,0x0C492u,0x1FBB4u,
         0x0ABEEu,0x0AEE0u,0x0FBFEu,0x0AEEAu,0x0BBB6u,0x04DE0u,
-        // 0-9
+        // 0-9 (10) -> индексы 26..35
         0x0FAAEu,0x04924u,0x0C492u,0x09554u,0x13D54u,0x19496u,0x0FA96u,0x12492u,0x1F554u,0x19554u,
-        // punct: ':' '-' '/' '.' '?' '!' '%' '(' ')' '+' '=' '<' '>' '#' '*' ',' ';' '!'->'|' '_' '[' ']'
+        // punct: ':' '-' '/' '.' '?' '!' '%' '(' ')' '+' '=' '<' '>' (13) -> индексы 36..48
         0x04920u,0x02040u,0x12492u,0x00800u,0x1192Au,0x04924u,0x08A28u,0x12400u,0x04924u,0x0AA28u,
-        0x12492u,0x08410u,0x09249u,0x11800u,0x0AA28u,0x00800u,0x04920u,0x04924u,0x04924u,0x0F800u,
-        0x0F800u,0x00F80u,
+        0x12492u,0x08410u,0x09249u,
     };
     int idx;
     if (c >= 'A' && c <= 'Z') idx = c - 'A';
@@ -339,6 +339,13 @@ static uint64_t glyph_bits(char c) {
             case '.': idx = 39; break;
             case '?': idx = 40; break;
             case '!': idx = 41; break;
+            case '%': idx = 42; break;
+            case '(': idx = 43; break;
+            case ')': idx = 44; break;
+            case '+': idx = 45; break;
+            case '=': idx = 46; break;
+            case '<': idx = 47; break;
+            case '>': idx = 48; break;
             default: return 0;
         }
     }

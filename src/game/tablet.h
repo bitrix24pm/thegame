@@ -3,6 +3,9 @@
 #include "../data/structs.h"
 #include "../math/math_utils.h"
 
+class AudioEngine;
+struct Dungeon;
+
 // Положить предмет в массив (переиспользует мёртвый слот)
 void pickup_spawn(Pickup* arr, vec2 pos, uint8_t kind, const Weapon& wpn, uint8_t tablet_flag);
 
