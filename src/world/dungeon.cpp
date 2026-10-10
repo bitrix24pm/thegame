@@ -15,7 +15,6 @@ static inline void world_to_tile(float wx, float wz, int& tx, int& ty) {
 
 bool DungeonGen::circle_free(const Dungeon& d, float wx, float wz, float r) {
     // проверяем 8 точек окружности + центр
-    if (!walkable(d, (wx)/1 + DUNGEON_GRID_C/2, wz + DUNGEON_GRID_C/2)) {}
     int tx, ty;
     world_to_tile(wx, wz, tx, ty);
     if (!walkable(d, tx, ty)) return false;
@@ -32,6 +31,21 @@ vec2 DungeonGen::random_pos_in_room(const Dungeon& d, int room_i, Rng& rng) {
     int tx = rm.x + 1 + rng.range(0, rm.w - 2);
     int ty = rm.y + 1 + rng.range(0, rm.h - 2);
     return tile_center(tx, ty);
+}
+
+int DungeonGen::room_at(const Dungeon& d, vec2 wp) {
+    int tx, ty;
+    world_to_tile(wp.x, wp.y, tx, ty);
+    for (int i = 0; i < d.room_count; i++) {
+        const Room& rm = d.rooms[i];
+        if (tx >= rm.x && tx < rm.x + rm.w && ty >= rm.y && ty < rm.y + rm.h) return i;
+    }
+    return -1;
+}
+
+vec2 dungeon_exit_pos(const Dungeon& d) {
+    const Room& rm = d.rooms[0];
+    return tile_center(rm.x + rm.w / 2, rm.y + rm.h - 2);
 }
 
 static inline bool rooms_intersect(const Room& a, const Room& b, int pad = 1) {

@@ -21,18 +21,19 @@ bool GLCore::load(void* (*getproc)(const char*)) {
     Uniform3f = (PFN_glUniform3f_)getproc("glUniform3f");
     Uniform4f = (PFN_glUniform4f_)getproc("glUniform4f");
     DeleteShader = (PFN_glDeleteShader_)getproc("glDeleteShader");
-    GenVertexArrays = (PFN_glGenVertexArrays_)getproc("glGenVertexArrays");
-    BindVertexArray = (PFN_glBindVertexArray_)getproc("glBindVertexArray");
-    GenBuffers = (PFN_glGenBuffers_)getproc("glGenBuffers");
-    BindBuffer = (PFN_glBindBuffer_)getproc("glBindBuffer");
-    BufferData = (PFN_glBufferData_)getproc("glBufferData");
-    VertexAttribPointer = (PFN_glVertexAttribPointer_)getproc("glVertexAttribPointer");
-    EnableVertexAttribArray = (PFN_glEnableVertexAttribArray_)getproc("glEnableVertexAttribArray");
-    DrawArrays = (PFN_glDrawArrays_)getproc("glDrawArrays");
-    DisableFn = (PFN_glDisable_)getproc("glDisable");
-    return CreateShader && ShaderSource && CompileShader && GetShaderiv && GetShaderInfoLog
-        && CreateProgram && AttachShader && LinkProgram && UseProgram && GetUniformLocation
-        && UniformMatrix4fv && Uniform1f && Uniform2f && Uniform3f && Uniform4f && DeleteShader
-        && GenVertexArrays && BindVertexArray && GenBuffers && BindBuffer && BufferData
-        && VertexAttribPointer && EnableVertexAttribArray && DrawArrays && DisableFn;
+    glGenVertexArrays = (PFN_glGenVertexArrays_)getproc("glGenVertexArrays");
+    glBindVertexArray = (PFN_glBindVertexArray_)getproc("glBindVertexArray");
+    glGenBuffers = (PFN_glGenBuffers_)getproc("glGenBuffers");
+    glBindBuffer = (PFN_glBindBuffer_)getproc("glBindBuffer");
+    glBufferData = (PFN_glBufferData_)getproc("glBufferData");
+    glVertexAttribPointer = (PFN_glVertexAttribPointer_)getproc("glVertexAttribPointer");
+    glEnableVertexAttribArray = (PFN_glEnableVertexAttribArray_)getproc("glEnableVertexAttribArray");
+    glDrawArrays = (PFN_glDrawArrays_)getproc("glDrawArrays");
+    glDisableFn = (PFN_glDisable_)getproc("glDisable");
+    glUniform1i = (PFN_glUniform1i_)getproc("glUniform1i");
+    return glCreateShader && glShaderSource && glCompileShader && glGetShaderiv && glGetShaderInfoLog
+        && glCreateProgram && glAttachShader && glLinkProgram && glUseProgram && glGetUniformLocation
+        && glUniformMatrix4fv && glUniform1f && glUniform2f && glUniform3f && glUniform4f && glDeleteShader
+        && glGenVertexArrays && glBindVertexArray && glGenBuffers && glBindBuffer && glBufferData
+        && glVertexAttribPointer && glEnableVertexAttribArray && glDrawArrays && glDisableFn && glUniform1i;
 }

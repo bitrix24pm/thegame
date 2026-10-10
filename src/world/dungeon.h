@@ -15,4 +15,9 @@ struct DungeonGen {
     static bool circle_free(const Dungeon& d, float wx, float wz, float r);
     // Случайная позиция внутри комнаты i
     static vec2 random_pos_in_room(const Dungeon& d, int room_i, Rng& rng);
+    // Индекс комнаты, содержащей мировую точку (или -1)
+    static int room_at(const Dungeon& d, vec2 world_pos);
 };
+
+// Позиция выхода из стартовой комнаты (следующий этаж)
+vec2 dungeon_exit_pos(const Dungeon& d);

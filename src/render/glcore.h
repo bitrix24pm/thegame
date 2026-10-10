@@ -4,7 +4,7 @@
 #include <cstdint>
 
 typedef char GLchar;
-typedef void (*PFN_glCreateShader_)(GLenum);
+typedef GLuint (*PFN_glCreateShader_)(GLenum);
 typedef void (*PFN_glShaderSource_)(GLuint, GLsizei, const GLchar* const*, const GLint*);
 typedef void (*PFN_glCompileShader_)(GLuint);
 typedef void (*PFN_glGetShaderiv_)(GLuint, GLenum, GLint*);
@@ -29,6 +29,7 @@ typedef void (*PFN_glVertexAttribPointer_)(GLuint, GLint, GLenum, GLboolean, GLs
 typedef void (*PFN_glEnableVertexAttribArray_)(GLuint);
 typedef void (*PFN_glDrawArrays_)(GLenum, GLint, GLsizei);
 typedef void (*PFN_glDisable_)(GLenum);
+typedef void (*PFN_glUniform1i_)(GLint, GLint);
 
 #ifndef GL_VERTEX_SHADER
 #define GL_VERTEX_SHADER 0x8B31
@@ -96,6 +97,7 @@ struct GLCore {
     PFN_glEnableVertexAttribArray_ EnableVertexAttribArray;
     PFN_glDrawArrays_ DrawArrays;
     PFN_glDisable_ DisableFn;
+    PFN_glUniform1i_ Uniform1i;
 
     bool load(void* (*getproc)(const char*));
 };
